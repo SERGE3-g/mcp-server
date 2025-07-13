@@ -1,0 +1,19 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(npm install:*)",
+      "Bash(npm run dev:*)",
+      "Bash(sed:*)",
+      "Bash(timeout 5 npm run dev)",
+      "Bash(npm cache clean:*)",
+      "Bash(ls:*)",
+      "Bash(node:*)",
+      "Bash(npm:*)",
+      "Bash(timeout:*)",
+      "Bash(chmod:*)",
+      "Bash(./setup-claude.sh:*)",
+      "Bash(open web-interface.html)"
+    ],
+    "deny": []
+  }
+}

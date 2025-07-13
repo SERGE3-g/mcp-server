@@ -1,0 +1,764 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MCP Server Dashboard</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            color: #333;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 40px;
+            color: white;
+        }
+
+        .header h1 {
+            font-size: 3rem;
+            margin-bottom: 10px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        }
+
+        .header p {
+            font-size: 1.2rem;
+            opacity: 0.9;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+            margin-bottom: 40px;
+        }
+
+        .stat-card {
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 15px;
+            padding: 25px;
+            text-align: center;
+            backdrop-filter: blur(10px);
+            box-shadow: 0 8px 32px rgba(0,0,0,0.1);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+
+        .stat-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 15px 40px rgba(0,0,0,0.2);
+        }
+
+        .stat-icon {
+            font-size: 2.5rem;
+            margin-bottom: 15px;
+            color: #667eea;
+        }
+
+        .stat-number {
+            font-size: 2rem;
+            font-weight: bold;
+            color: #333;
+            margin-bottom: 5px;
+        }
+
+        .stat-label {
+            color: #666;
+            font-size: 0.9rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .main-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 30px;
+        }
+
+        .panel {
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 15px;
+            padding: 30px;
+            backdrop-filter: blur(10px);
+            box-shadow: 0 8px 32px rgba(0,0,0,0.1);
+        }
+
+        .panel h2 {
+            color: #333;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .panel h2 i {
+            color: #667eea;
+        }
+
+        .tools-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+        }
+
+        .tool-card {
+            background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+            border-radius: 10px;
+            padding: 20px;
+            text-align: center;
+            transition: all 0.3s ease;
+            border: 2px solid transparent;
+            cursor: pointer;
+        }
+
+        .tool-card:hover {
+            border-color: #667eea;
+            transform: scale(1.05);
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+
+        .tool-card i {
+            font-size: 1.8rem;
+            margin-bottom: 10px;
+            display: block;
+        }
+
+        .tool-card h4 {
+            margin-bottom: 8px;
+            font-size: 0.9rem;
+        }
+
+        .tool-card p {
+            font-size: 0.8rem;
+            opacity: 0.8;
+        }
+
+        .status-indicator {
+            display: inline-block;
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            margin-right: 8px;
+        }
+
+        .status-online {
+            background: #28a745;
+            box-shadow: 0 0 10px rgba(40, 167, 69, 0.5);
+        }
+
+        .status-offline {
+            background: #dc3545;
+        }
+
+        .log-container {
+            background: #1a1a1a;
+            color: #00ff41;
+            padding: 20px;
+            border-radius: 10px;
+            font-family: 'Courier New', monospace;
+            font-size: 0.9rem;
+            max-height: 300px;
+            overflow-y: auto;
+            margin-top: 20px;
+        }
+
+        .log-line {
+            margin-bottom: 5px;
+            display: flex;
+            gap: 10px;
+        }
+
+        .log-time {
+            color: #888;
+            min-width: 80px;
+        }
+
+        .log-level {
+            min-width: 60px;
+            font-weight: bold;
+        }
+
+        .log-level.INFO {
+            color: #00ff41;
+        }
+
+        .log-level.ERROR {
+            color: #ff4444;
+        }
+
+        .log-level.DEBUG {
+            color: #ffaa00;
+        }
+
+        .control-panel {
+            display: flex;
+            gap: 15px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+        }
+
+        .btn {
+            padding: 12px 24px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: bold;
+            transition: all 0.3s ease;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+
+        .btn-success {
+            background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+            color: white;
+        }
+
+        .btn-danger {
+            background: linear-gradient(135deg, #dc3545 0%, #fd7e14 100%);
+            color: white;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+        }
+
+        .metrics-chart {
+            display: flex;
+            align-items: end;
+            gap: 5px;
+            height: 100px;
+            margin-top: 20px;
+        }
+
+        .chart-bar {
+            background: linear-gradient(to top, #667eea, #764ba2);
+            min-width: 20px;
+            border-radius: 4px 4px 0 0;
+            transition: all 0.3s ease;
+        }
+
+        .chart-bar:hover {
+            background: linear-gradient(to top, #764ba2, #667eea);
+        }
+
+        .websocket-status {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 15px;
+        }
+
+        .pulse {
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0% {
+                box-shadow: 0 0 0 0 rgba(102, 126, 234, 0.7);
+            }
+            70% {
+                box-shadow: 0 0 0 10px rgba(102, 126, 234, 0);
+            }
+            100% {
+                box-shadow: 0 0 0 0 rgba(102, 126, 234, 0);
+            }
+        }
+
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.5);
+            backdrop-filter: blur(5px);
+        }
+
+        .modal-content {
+            background: white;
+            margin: 5% auto;
+            padding: 30px;
+            border-radius: 15px;
+            width: 80%;
+            max-width: 600px;
+            position: relative;
+            animation: modalOpen 0.3s ease;
+        }
+
+        @keyframes modalOpen {
+            from {
+                opacity: 0;
+                transform: scale(0.9);
+            }
+            to {
+                opacity: 1;
+                transform: scale(1);
+            }
+        }
+
+        .close {
+            position: absolute;
+            right: 20px;
+            top: 20px;
+            font-size: 28px;
+            font-weight: bold;
+            cursor: pointer;
+            color: #aaa;
+        }
+
+        .close:hover {
+            color: #000;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+        }
+
+        .form-group input,
+        .form-group textarea,
+        .form-group select {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #ddd;
+            border-radius: 8px;
+            font-size: 14px;
+            transition: border-color 0.3s ease;
+        }
+
+        .form-group input:focus,
+        .form-group textarea:focus,
+        .form-group select:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        @media (max-width: 768px) {
+            .main-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .header h1 {
+                font-size: 2rem;
+            }
+            
+            .control-panel {
+                justify-content: center;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1><i class="fas fa-server"></i> MCP Server Dashboard</h1>
+            <p>Sistema di gestione completo per il tuo server MCP</p>
+        </div>
+
+        <div class="stats-grid">
+            <div class="stat-card">
+                <div class="stat-icon"><i class="fas fa-tools"></i></div>
+                <div class="stat-number" id="toolsCount">14</div>
+                <div class="stat-label">Tools Attivi</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-icon"><i class="fas fa-clock"></i></div>
+                <div class="stat-number" id="uptime">0h 0m</div>
+                <div class="stat-label">Uptime</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-icon"><i class="fas fa-chart-line"></i></div>
+                <div class="stat-number" id="requestCount">0</div>
+                <div class="stat-label">Richieste</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-icon"><i class="fas fa-memory"></i></div>
+                <div class="stat-number" id="memoryUsage">0MB</div>
+                <div class="stat-label">Memoria</div>
+            </div>
+        </div>
+
+        <div class="main-grid">
+            <div class="panel">
+                <h2><i class="fas fa-cogs"></i> Controlli Server</h2>
+                <div class="control-panel">
+                    <button class="btn btn-success" onclick="startServer()">
+                        <i class="fas fa-play"></i> Avvia
+                    </button>
+                    <button class="btn btn-danger" onclick="stopServer()">
+                        <i class="fas fa-stop"></i> Ferma
+                    </button>
+                    <button class="btn btn-primary" onclick="restartServer()">
+                        <i class="fas fa-redo"></i> Riavvia
+                    </button>
+                    <button class="btn btn-primary" onclick="openToolModal()">
+                        <i class="fas fa-plus"></i> Test Tool
+                    </button>
+                </div>
+
+                <div class="websocket-status">
+                    <span class="status-indicator status-online pulse" id="statusIndicator"></span>
+                    <span id="statusText">Server Online</span>
+                </div>
+
+                <h3><i class="fas fa-chart-bar"></i> Metriche Real-time</h3>
+                <div class="metrics-chart" id="metricsChart">
+                    <!-- Chart bars will be generated by JavaScript -->
+                </div>
+            </div>
+
+            <div class="panel">
+                <h2><i class="fas fa-tools"></i> Tools Disponibili</h2>
+                <div class="tools-grid" id="toolsGrid">
+                    <!-- Tools will be populated by JavaScript -->
+                </div>
+            </div>
+        </div>
+
+        <div class="panel" style="margin-top: 30px;">
+            <h2><i class="fas fa-terminal"></i> Log Real-time</h2>
+            <div class="log-container" id="logContainer">
+                <div class="log-line">
+                    <span class="log-time">08:30:15</span>
+                    <span class="log-level INFO">INFO</span>
+                    <span>Server MCP avviato e in ascolto...</span>
+                </div>
+                <div class="log-line">
+                    <span class="log-time">08:30:16</span>
+                    <span class="log-level DEBUG">DEBUG</span>
+                    <span>Plugin system inizializzato</span>
+                </div>
+                <div class="log-line">
+                    <span class="log-time">08:30:17</span>
+                    <span class="log-level INFO">INFO</span>
+                    <span>Database SQLite connesso</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal per test tools -->
+    <div id="toolModal" class="modal">
+        <div class="modal-content">
+            <span class="close" onclick="closeToolModal()">&times;</span>
+            <h2><i class="fas fa-play-circle"></i> Test Tool</h2>
+            
+            <div class="form-group">
+                <label for="toolSelect">Seleziona Tool:</label>
+                <select id="toolSelect" onchange="updateToolForm()">
+                    <option value="">-- Seleziona un tool --</option>
+                </select>
+            </div>
+
+            <div id="toolForm"></div>
+
+            <div class="control-panel">
+                <button class="btn btn-primary" onclick="executeTool()">
+                    <i class="fas fa-play"></i> Esegui
+                </button>
+                <button class="btn btn-danger" onclick="closeToolModal()">
+                    <i class="fas fa-times"></i> Annulla
+                </button>
+            </div>
+
+            <div id="toolResult" style="margin-top: 20px;"></div>
+        </div>
+    </div>
+
+    <script>
+        // Configurazione tools
+        const tools = [
+            { name: 'get_system_info', icon: 'fas fa-info-circle', description: 'Info Sistema' },
+            { name: 'echo', icon: 'fas fa-echo', description: 'Test Echo' },
+            { name: 'list_files', icon: 'fas fa-folder-open', description: 'Lista File' },
+            { name: 'read_file', icon: 'fas fa-file-alt', description: 'Leggi File' },
+            { name: 'execute_command', icon: 'fas fa-terminal', description: 'Comando Sistema' },
+            { name: 'json_tools', icon: 'fas fa-code', description: 'JSON Tools' },
+            { name: 'http_request', icon: 'fas fa-globe', description: 'HTTP Request' },
+            { name: 'text_processing', icon: 'fas fa-text-height', description: 'Text Processing' },
+            { name: 'crypto_tools', icon: 'fas fa-lock', description: 'Crypto Tools' },
+            { name: 'file_operations', icon: 'fas fa-copy', description: 'File Operations' },
+            { name: 'git_operations', icon: 'fab fa-git-alt', description: 'Git Operations' },
+            { name: 'sqlite_db', icon: 'fas fa-database', description: 'SQLite DB' },
+            { name: 'plugin_manager', icon: 'fas fa-plug', description: 'Plugin Manager' },
+            { name: 'health_check', icon: 'fas fa-heartbeat', description: 'Health Check' }
+        ];
+
+        let startTime = Date.now();
+        let requestCount = 0;
+        let memoryUsage = 45;
+
+        // Inizializzazione
+        document.addEventListener('DOMContentLoaded', function() {
+            initializeToolsGrid();
+            initializeMetricsChart();
+            startRealTimeUpdates();
+            populateToolSelect();
+        });
+
+        function initializeToolsGrid() {
+            const toolsGrid = document.getElementById('toolsGrid');
+            toolsGrid.innerHTML = '';
+
+            tools.forEach(tool => {
+                const toolCard = document.createElement('div');
+                toolCard.className = 'tool-card';
+                toolCard.onclick = () => selectTool(tool.name);
+                
+                toolCard.innerHTML = `
+                    <i class="${tool.icon}"></i>
+                    <h4>${tool.description}</h4>
+                    <p>${tool.name}</p>
+                `;
+                
+                toolsGrid.appendChild(toolCard);
+            });
+        }
+
+        function initializeMetricsChart() {
+            const chartContainer = document.getElementById('metricsChart');
+            chartContainer.innerHTML = '';
+
+            for (let i = 0; i < 20; i++) {
+                const bar = document.createElement('div');
+                bar.className = 'chart-bar';
+                bar.style.height = Math.random() * 80 + 20 + 'px';
+                chartContainer.appendChild(bar);
+            }
+        }
+
+        function startRealTimeUpdates() {
+            setInterval(() => {
+                updateUptime();
+                updateMemoryUsage();
+                updateMetricsChart();
+                addRandomLogEntry();
+            }, 2000);
+        }
+
+        function updateUptime() {
+            const elapsed = Date.now() - startTime;
+            const hours = Math.floor(elapsed / (1000 * 60 * 60));
+            const minutes = Math.floor((elapsed % (1000 * 60 * 60)) / (1000 * 60));
+            document.getElementById('uptime').textContent = `${hours}h ${minutes}m`;
+        }
+
+        function updateMemoryUsage() {
+            memoryUsage += (Math.random() - 0.5) * 5;
+            memoryUsage = Math.max(20, Math.min(100, memoryUsage));
+            document.getElementById('memoryUsage').textContent = Math.round(memoryUsage) + 'MB';
+        }
+
+        function updateMetricsChart() {
+            const bars = document.querySelectorAll('.chart-bar');
+            bars.forEach(bar => {
+                bar.style.height = Math.random() * 80 + 20 + 'px';
+            });
+        }
+
+        function addRandomLogEntry() {
+            const logContainer = document.getElementById('logContainer');
+            const logMessages = [
+                { level: 'INFO', message: 'Tool eseguito con successo' },
+                { level: 'DEBUG', message: 'Cache hit per richiesta' },
+                { level: 'INFO', message: 'Nuovo client connesso' },
+                { level: 'DEBUG', message: 'Plugin caricato dinamicamente' },
+                { level: 'INFO', message: 'Database query completata' }
+            ];
+
+            const randomLog = logMessages[Math.floor(Math.random() * logMessages.length)];
+            const time = new Date().toLocaleTimeString('it-IT');
+            
+            const logLine = document.createElement('div');
+            logLine.className = 'log-line';
+            logLine.innerHTML = `
+                <span class="log-time">${time}</span>
+                <span class="log-level ${randomLog.level}">${randomLog.level}</span>
+                <span>${randomLog.message}</span>
+            `;
+
+            logContainer.appendChild(logLine);
+            logContainer.scrollTop = logContainer.scrollHeight;
+
+            // Mantieni solo gli ultimi 20 log
+            while (logContainer.children.length > 20) {
+                logContainer.removeChild(logContainer.firstChild);
+            }
+        }
+
+        function startServer() {
+            document.getElementById('statusIndicator').className = 'status-indicator status-online pulse';
+            document.getElementById('statusText').textContent = 'Server Online';
+            addLogEntry('INFO', 'Server avviato manualmente');
+        }
+
+        function stopServer() {
+            document.getElementById('statusIndicator').className = 'status-indicator status-offline';
+            document.getElementById('statusText').textContent = 'Server Offline';
+            addLogEntry('INFO', 'Server fermato manualmente');
+        }
+
+        function restartServer() {
+            stopServer();
+            setTimeout(() => {
+                startServer();
+                addLogEntry('INFO', 'Server riavviato');
+            }, 1000);
+        }
+
+        function addLogEntry(level, message) {
+            const logContainer = document.getElementById('logContainer');
+            const time = new Date().toLocaleTimeString('it-IT');
+            
+            const logLine = document.createElement('div');
+            logLine.className = 'log-line';
+            logLine.innerHTML = `
+                <span class="log-time">${time}</span>
+                <span class="log-level ${level}">${level}</span>
+                <span>${message}</span>
+            `;
+
+            logContainer.appendChild(logLine);
+            logContainer.scrollTop = logContainer.scrollHeight;
+        }
+
+        function openToolModal() {
+            document.getElementById('toolModal').style.display = 'block';
+        }
+
+        function closeToolModal() {
+            document.getElementById('toolModal').style.display = 'none';
+            document.getElementById('toolResult').innerHTML = '';
+        }
+
+        function populateToolSelect() {
+            const select = document.getElementById('toolSelect');
+            tools.forEach(tool => {
+                const option = document.createElement('option');
+                option.value = tool.name;
+                option.textContent = tool.description;
+                select.appendChild(option);
+            });
+        }
+
+        function selectTool(toolName) {
+            document.getElementById('toolSelect').value = toolName;
+            updateToolForm();
+            openToolModal();
+        }
+
+        function updateToolForm() {
+            const toolName = document.getElementById('toolSelect').value;
+            const formContainer = document.getElementById('toolForm');
+            
+            if (!toolName) {
+                formContainer.innerHTML = '';
+                return;
+            }
+
+            // Genera form dinamico basato sul tool selezionato
+            const forms = {
+                'echo': `
+                    <div class="form-group">
+                        <label for="echoText">Testo:</label>
+                        <input type="text" id="echoText" placeholder="Inserisci il testo da ripetere">
+                    </div>
+                `,
+                'get_system_info': `
+                    <div class="form-group">
+                        <label for="detailed">Informazioni dettagliate:</label>
+                        <select id="detailed">
+                            <option value="false">No</option>
+                            <option value="true">Sì</option>
+                        </select>
+                    </div>
+                `,
+                'http_request': `
+                    <div class="form-group">
+                        <label for="url">URL:</label>
+                        <input type="url" id="url" placeholder="https://example.com">
+                    </div>
+                    <div class="form-group">
+                        <label for="method">Metodo:</label>
+                        <select id="method">
+                            <option value="GET">GET</option>
+                            <option value="POST">POST</option>
+                            <option value="PUT">PUT</option>
+                            <option value="DELETE">DELETE</option>
+                        </select>
+                    </div>
+                `
+            };
+
+            formContainer.innerHTML = forms[toolName] || '<p>Nessun parametro richiesto per questo tool.</p>';
+        }
+
+        function executeTool() {
+            const toolName = document.getElementById('toolSelect').value;
+            if (!toolName) {
+                alert('Seleziona un tool prima di eseguire');
+                return;
+            }
+
+            // Simula esecuzione tool
+            document.getElementById('toolResult').innerHTML = `
+                <div style="background: #f8f9fa; padding: 15px; border-radius: 8px; border-left: 4px solid #28a745;">
+                    <h4><i class="fas fa-check-circle" style="color: #28a745;"></i> Tool Eseguito</h4>
+                    <p><strong>Tool:</strong> ${toolName}</p>
+                    <p><strong>Stato:</strong> Completato con successo</p>
+                    <p><strong>Tempo:</strong> ${Math.random() * 1000 + 100}ms</p>
+                    <pre style="background: #f1f3f4; padding: 10px; border-radius: 4px; margin-top: 10px; font-size: 12px;">${JSON.stringify({
+                        success: true,
+                        tool: toolName,
+                        timestamp: new Date().toISOString(),
+                        result: "Risultato simulato per demo"
+                    }, null, 2)}</pre>
+                </div>
+            `;
+
+            requestCount++;
+            document.getElementById('requestCount').textContent = requestCount;
+            addLogEntry('INFO', `Tool ${toolName} eseguito via dashboard`);
+        }
+
+        // Chiudi modal cliccando fuori
+        window.onclick = function(event) {
+            const modal = document.getElementById('toolModal');
+            if (event.target === modal) {
+                closeToolModal();
+            }
+        }
+    </script>
+</body>
+</html>
